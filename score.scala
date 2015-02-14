@@ -231,10 +231,10 @@ def concatListas (lst:List [List [List [Int]]]):List [List [Int]] ={
 
 def main(args: Array[String]): Unit = {
 
-  val  exemple = Parallel (List (
-  Sequential (List (Note (60,1000,100), Note (63,500,100), Note (61,500,100),
-                     Rest (1000), Note(67,1000,100))),
-  Sequential (List (Note (52,2000,100),Note (55,1000,100), Note (55,1000,100)))))
-  openEditor(exemple)
+//  val  exemple = Parallel (List (
+//  Sequential (List (Note (60,1000,100), Note (63,500,100), Note (61,500,100),
+//                     Rest (1000), Note(67,1000,100))),
+//  Sequential (List (Note (52,2000,100),Note (55,1000,100), Note (55,1000,100)))))
+  openEditor(canon_Bach())
   }
 }
