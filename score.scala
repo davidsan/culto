@@ -19,6 +19,9 @@ case class Note (pitch:Int, dur:Int, vel:Int) extends SimpleObjectMusical
 case class Rest (dur:Int) extends SimpleObjectMusical
 case class Sequential (elements:List[ObjectMusical]) extends ComposeObjectMusical
 case class Parallel (elements:List[ObjectMusical]) extends ComposeObjectMusical
+case class Poly (elements:List[ObjectMusical]) extends ComposeObjectMusical
+case class Voix (numVoix:Int, elements:List[ObjectMusical]) extends ComposeObjectMusical
+case class Chord (date:Int, elements:List[ObjectMusical]) extends ComposeObjectMusical
 
 object score {
 
@@ -29,6 +32,9 @@ obj match {
   case Rest(d) => d
   case Sequential (l) => (l.map(duration)).foldLeft(0)(_+_)
   case Parallel (l) => (l.map(duration)).foldLeft(0)(math.max)
+  case Poly (l) => (l.map(duration)).foldLeft(0)(math.max)
+  case Voix (n,l) => (l.map(duration)).foldLeft(0)(math.max)
+  case Chord(d,l) => 999999 // seems to work fine for our purpose
 }
 
  // Copy un objet musical
@@ -38,6 +44,9 @@ obj match {
   case Rest(d) => Rest(d)
   case Sequential (l) => Sequential (l.map(copy))
   case Parallel (l) => Parallel (l.map(copy))
+  case Poly (l) => Poly (l.map(copy))
+  case Voix (n,l) => Voix (n,l.map(copy))
+  case Chord (d,l) => Chord (d,l.map(copy))
 }
 
 // Compte le nombre de notes d'un objet musical
@@ -46,6 +55,9 @@ obj match {
   case Note(p,d,v) => 1
   case Parallel (l) => (l.map(note_count)).foldLeft(0)(_+_)
   case Sequential (l) => (l.map(note_count)).foldLeft(0)(_+_)
+  case Poly (l) => (l.map(note_count)).foldLeft(0)(_+_)
+  case Voix (n,l) => (l.map(note_count)).foldLeft(0)(_+_)
+  case Chord (d,l) => (l.map(note_count)).foldLeft(0)(_+_)
   case _ => 0
 }
 
@@ -56,6 +68,9 @@ obj match {
   case Rest(d) => Rest((d*fact).toInt)
   case Parallel (l) => Parallel (l.map(stretch (_,fact)))
   case Sequential (l) => Sequential (l.map(stretch (_,fact)))
+  case Poly (l) => Poly (l.map(stretch (_,fact)))
+  case Voix (n,l) => Voix (n,l.map(stretch (_,fact)))
+  case Chord (d,l) => Chord (d,l.map(stretch (_,fact)))
 }
 
 
@@ -66,6 +81,9 @@ obj match {
   case Rest(d) => Rest(d)
   case Parallel (l) => Parallel (l.map(transpose (_,n)))
   case Sequential (l) => Sequential (l.map(transpose (_,n)))
+  case Poly (l) => Poly (l.map(transpose (_,n)))
+  case Voix (n,l) => Voix (n,l.map(transpose (_,n)))
+  case Chord (d,l) => Chord (d,l.map(transpose (_,n)))
 }
 
 // mirror de obj au tour du center c
@@ -75,6 +93,9 @@ obj match {
   case Rest(d) => Rest(d)
   case Parallel (l) => Parallel (l.map(mirror (_,c)))
   case Sequential (l) => Sequential (l.map(mirror (_,c)))
+  case Poly (l) => Poly (l.map(mirror (_,c)))
+  case Voix (n,l) => Voix (n,l.map(mirror (_,c)))
+  case Chord (d,l) => Chord (d,l.map(mirror (_,c)))
 }
 
 // retrograde un obj
@@ -185,6 +206,10 @@ obj match {
   case Sequential (l) => {var date = at
                         l.foreach(n=>{drawAt(n,date,g); date = date + duration(n)})}
   case Parallel (l) => l.foreach(n=>drawAt(n,at,g))
+  case Poly (l) => l.foreach(n=>drawAt(n,at,g)) // looks good
+  case Voix (n,l) => l.foreach(n=>drawAt(n,at,g))
+  case Chord (d,l) => {var date = d
+                      l.foreach(n=>{drawAt(n,date+at,g); date = date + duration(n)})} // decalage de d
 }
 }
 
@@ -217,6 +242,11 @@ obj match {
                         concatListas (l.map(n=>{val rep = collectNotes(n,date);
                         date = date + duration(n); rep}))}
   case Parallel (l) => concatListas (l.map(n=>collectNotes(n,at)))
+  case Poly (l) => concatListas (l.map(n=>collectNotes(n,at))) // looks ok
+  case Voix (num,l) => concatListas (l.map(n=>collectNotes(n,at))) // looks ok too
+  case Chord (d,l) => { var date = d
+                  concatListas (l.map(n=>{val rep = collectNotes(n,at+date);
+                                          date = date + duration(n);rep} ))}
 }
 }
 
@@ -227,6 +257,217 @@ def concatListas (lst:List [List [List [Int]]]):List [List [Int]] ={
 }
 
 
+
+//////////////////////////////////////////////////
+
+val cantateBWV318 =
+Poly (List (Voix (0 , List (Chord (0 , List (Note (67, 100, 1000)))
+, Chord (1000 , List (Note (67, 100, 500)))
+, Chord (1500 , List (Note (69, 100, 500)))
+, Chord (2000 , List (Note (71, 100, 1000)))
+, Chord (3000 , List (Note (72, 100, 1000)))
+, Chord (4000 , List (Note (74, 100, 1000)))
+, Chord (5000 , List (Note (76, 100, 1000)))
+, Chord (6000 , List (Note (74, 100, 2000)))
+, Chord (8000 , List (Note (76, 100, 1000)))
+, Chord (9000 , List (Note (78, 100, 1000)))
+, Chord (10000 , List (Note (79, 100, 1000)))
+, Chord (11000 , List (Note (74, 100, 1000)))
+, Chord (12000 , List (Note (71, 100, 1000)))
+, Chord (13000 , List (Note (73, 100, 1000)))
+, Chord (14000 , List (Note (74, 100, 2000)))
+, Chord (16000 , List (Note (72, 100, 1000)))
+, Chord (17000 , List (Note (69, 100, 1000)))
+, Chord (18000 , List (Note (71, 100, 1000)))
+, Chord (19000 , List (Note (72, 100, 1000)))
+, Chord (20000 , List (Note (71, 100, 1000)))
+, Chord (21000 , List (Note (69, 100, 1000)))
+, Chord (22000 , List (Note (67, 100, 2000)))
+, Chord (24000 , List (Note (66, 100, 1000)))
+, Chord (25000 , List (Note (67, 100, 1000)))
+, Chord (26000 , List (Note (69, 100, 1000)))
+, Chord (27000 , List (Note (71, 100, 1000)))
+, Chord (28000 , List (Note (69, 100, 1500)))
+, Chord (29500 , List (Note (67, 100, 500)))
+, Chord (30000 , List (Note (66, 100, 1000)))
+, Chord (31000 , List (Note (64, 100, 1000)))
+, Chord (32000 , List (Note (62, 100, 4000)))
+, Chord (36000 , List (Note (67, 100, 1000)))
+, Chord (37000 , List (Note (67, 100, 500)))
+, Chord (37500 , List (Note (69, 100, 500)))
+, Chord (38000 , List (Note (71, 100, 1000)))
+, Chord (39000 , List (Note (72, 100, 1000)))
+, Chord (40000 , List (Note (74, 100, 1000)))
+, Chord (41000 , List (Note (76, 100, 1000)))
+, Chord (42000 , List (Note (74, 100, 2000)))
+, Chord (44000 , List (Note (67, 100, 1000)))
+, Chord (45000 , List (Note (69, 100, 1000)))
+, Chord (46000 , List (Note (71, 100, 1000)))
+, Chord (47000 , List (Note (72, 100, 1000)))
+, Chord (48000 , List (Note (71, 100, 1000)))
+, Chord (49000 , List (Note (69, 100, 1000)))
+, Chord (50000 , List (Note (67, 100, 2000)))
+))
+, Voix (1 , List (Chord (0 , List (Note (62, 100, 1000)))
+, Chord (1000 , List (Note (64, 100, 500)))
+, Chord (1500 , List (Note (66, 100, 500)))
+, Chord (2000 , List (Note (67, 100, 1000)))
+, Chord (3000 , List (Note (66, 100, 500)))
+, Chord (3500 , List (Note (64, 100, 500)))
+, Chord (4000 , List (Note (62, 100, 500)))
+, Chord (4500 , List (Note (66, 100, 500)))
+, Chord (5000 , List (Note (71, 100, 500)))
+, Chord (5500 , List (Note (69, 100, 500)))
+, Chord (6000 , List (Note (66, 100, 2000)))
+, Chord (8000 , List (Note (69, 100, 1000)))
+, Chord (9000 , List (Note (69, 100, 1000)))
+, Chord (10000 , List (Note (67, 100, 1000)))
+, Chord (11000 , List (Note (69, 100, 1000)))
+, Chord (12000 , List (Note (67, 100, 500)))
+, Chord (12500 , List (Note (66, 100, 500)))
+, Chord (13000 , List (Note (64, 100, 1000)))
+, Chord (14000 , List (Note (66, 100, 2000)))
+, Chord (16000 , List (Note (64, 100, 1000)))
+, Chord (17000 , List (Note (62, 100, 1000)))
+, Chord (18000 , List (Note (62, 100, 1000)))
+, Chord (19000 , List (Note (60, 100, 1000)))
+, Chord (20000 , List (Note (62, 100, 1500)))
+, Chord (21500 , List (Note (60, 100, 500)))
+, Chord (22000 , List (Note (59, 100, 2000)))
+, Chord (24000 , List (Note (62, 100, 1000)))
+, Chord (25000 , List (Note (61, 100, 500)))
+, Chord (25500 , List (Note (59, 100, 500)))
+, Chord (26000 , List (Note (57, 100, 1000)))
+, Chord (27000 , List (Note (62, 100, 1000)))
+, Chord (28000 , List (Note (64, 100, 2500)))
+, Chord (30500 , List (Note (62, 100, 1000)))
+, Chord (31500 , List (Note (61, 100, 500)))
+, Chord (32000 , List (Note (57, 100, 4000)))
+, Chord (36000 , List (Note (62, 100, 1000)))
+, Chord (37000 , List (Note (64, 100, 500)))
+, Chord (37500 , List (Note (66, 100, 500)))
+, Chord (38000 , List (Note (67, 100, 1000)))
+, Chord (39000 , List (Note (67, 100, 1000)))
+, Chord (40000 , List (Note (65, 100, 1000)))
+, Chord (41000 , List (Note (64, 100, 500)))
+, Chord (41500 , List (Note (66, 100, 500)))
+, Chord (42000 , List (Note (67, 100, 2000)))
+, Chord (44000 , List (Note (67, 100, 500)))
+, Chord (44500 , List (Note (64, 100, 500)))
+, Chord (45000 , List (Note (62, 100, 500)))
+, Chord (45500 , List (Note (60, 100, 500)))
+, Chord (46000 , List (Note (59, 100, 500)))
+, Chord (46500 , List (Note (57, 100, 500)))
+, Chord (47000 , List (Note (55, 100, 500)))
+, Chord (47500 , List (Note (66, 100, 500)))
+, Chord (48000 , List (Note (67, 100, 1500)))
+, Chord (49500 , List (Note (66, 100, 500)))
+, Chord (50000 , List (Note (62, 100, 2000)))
+))
+, Voix (2 , List (Chord (0 , List (Note (59, 100, 1000)))
+, Chord (1000 , List (Note (60, 100, 1000)))
+, Chord (2000 , List (Note (62, 100, 1000)))
+, Chord (3000 , List (Note (60, 100, 1000)))
+, Chord (4000 , List (Note (59, 100, 250)))
+, Chord (4250 , List (Note (60, 100, 250)))
+, Chord (4500 , List (Note (62, 100, 1000)))
+, Chord (5500 , List (Note (61, 100, 500)))
+, Chord (6000 , List (Note (62, 100, 2000)))
+, Chord (8000 , List (Note (60, 100, 500)))
+, Chord (8500 , List (Note (59, 100, 500)))
+, Chord (9000 , List (Note (60, 100, 500)))
+, Chord (9500 , List (Note (62, 100, 500)))
+, Chord (10000 , List (Note (59, 100, 1000)))
+, Chord (11000 , List (Note (57, 100, 1000)))
+, Chord (12000 , List (Note (62, 100, 1000)))
+, Chord (13000 , List (Note (57, 100, 1000)))
+, Chord (14000 , List (Note (57, 100, 2000)))
+, Chord (16000 , List (Note (55, 100, 1000)))
+, Chord (17000 , List (Note (57, 100, 1000)))
+, Chord (18000 , List (Note (55, 100, 500)))
+, Chord (18500 , List (Note (54, 100, 500)))
+, Chord (19000 , List (Note (55, 100, 1000)))
+, Chord (20000 , List (Note (55, 100, 1000)))
+, Chord (21000 , List (Note (54, 100, 1000)))
+, Chord (22000 , List (Note (55, 100, 2000)))
+, Chord (24000 , List (Note (57, 100, 1000)))
+, Chord (25000 , List (Note (55, 100, 1000)))
+, Chord (26000 , List (Note (62, 100, 500)))
+, Chord (26500 , List (Note (61, 100, 500)))
+, Chord (27000 , List (Note (59, 100, 1000)))
+, Chord (28000 , List (Note (52, 100, 1000)))
+, Chord (29000 , List (Note (57, 100, 2000)))
+, Chord (31000 , List (Note (55, 100, 1000)))
+, Chord (32000 , List (Note (54, 100, 4000)))
+, Chord (36000 , List (Note (55, 100, 1000)))
+, Chord (37000 , List (Note (60, 100, 1000)))
+, Chord (38000 , List (Note (62, 100, 1000)))
+, Chord (39000 , List (Note (60, 100, 1000)))
+, Chord (40000 , List (Note (60, 100, 500)))
+, Chord (40500 , List (Note (59, 100, 500)))
+, Chord (41000 , List (Note (60, 100, 1000)))
+, Chord (42000 , List (Note (59, 100, 2000)))
+, Chord (44000 , List (Note (59, 100, 1000)))
+, Chord (45000 , List (Note (57, 100, 1000)))
+, Chord (46000 , List (Note (62, 100, 1000)))
+, Chord (47000 , List (Note (64, 100, 500)))
+, Chord (47500 , List (Note (57, 100, 500)))
+, Chord (48000 , List (Note (59, 100, 500)))
+, Chord (48500 , List (Note (60, 100, 500)))
+, Chord (49000 , List (Note (62, 100, 1000)))
+, Chord (50000 , List (Note (59, 100, 2000)))
+))
+, Voix (3 , List (Chord (0 , List (Note (55, 100, 1000)))
+, Chord (1000 , List (Note (48, 100, 1000)))
+, Chord (2000 , List (Note (43, 100, 500)))
+, Chord (2500 , List (Note (55, 100, 500)))
+, Chord (3000 , List (Note (57, 100, 1000)))
+, Chord (4000 , List (Note (59, 100, 500)))
+, Chord (4500 , List (Note (57, 100, 500)))
+, Chord (5000 , List (Note (55, 100, 500)))
+, Chord (5500 , List (Note (57, 100, 500)))
+, Chord (6000 , List (Note (50, 100, 2000)))
+, Chord (8000 , List (Note (57, 100, 1000)))
+, Chord (9000 , List (Note (50, 100, 1000)))
+, Chord (10000 , List (Note (52, 100, 1000)))
+, Chord (11000 , List (Note (54, 100, 1000)))
+, Chord (12000 , List (Note (55, 100, 1000)))
+, Chord (13000 , List (Note (57, 100, 1000)))
+, Chord (14000 , List (Note (50, 100, 2000)))
+, Chord (16000 , List (Note (52, 100, 1000)))
+, Chord (17000 , List (Note (54, 100, 1000)))
+, Chord (18000 , List (Note (55, 100, 1000)))
+, Chord (19000 , List (Note (52, 100, 1000)))
+, Chord (20000 , List (Note (50, 100, 500)))
+, Chord (20500 , List (Note (48, 100, 500)))
+, Chord (21000 , List (Note (50, 100, 1000)))
+, Chord (22000 , List (Note (43, 100, 2000)))
+, Chord (24000 , List (Note (50, 100, 1000)))
+, Chord (25000 , List (Note (52, 100, 1000)))
+, Chord (26000 , List (Note (54, 100, 1000)))
+, Chord (27000 , List (Note (55, 100, 1000)))
+, Chord (28000 , List (Note (49, 100, 1000)))
+, Chord (29000 , List (Note (45, 100, 1000)))
+, Chord (30000 , List (Note (50, 100, 1000)))
+, Chord (31000 , List (Note (45, 100, 1000)))
+, Chord (32000 , List (Note (50, 100, 4000)))
+, Chord (36000 , List (Note (47, 100, 1000)))
+, Chord (37000 , List (Note (48, 100, 1000)))
+, Chord (38000 , List (Note (55, 100, 1000)))
+, Chord (39000 , List (Note (52, 100, 1000)))
+, Chord (40000 , List (Note (50, 100, 1000)))
+, Chord (41000 , List (Note (48, 100, 1000)))
+, Chord (42000 , List (Note (55, 100, 2000)))
+, Chord (44000 , List (Note (52, 100, 1000)))
+, Chord (45000 , List (Note (54, 100, 1000)))
+, Chord (46000 , List (Note (55, 100, 1000)))
+, Chord (47000 , List (Note (52, 100, 1000)))
+, Chord (48000 , List (Note (50, 100, 2000)))
+, Chord (50000 , List (Note (55, 100, 2000)))
+))
+))
+
+
 //////////////////////////////////////////////////
 
 def main(args: Array[String]): Unit = {
@@ -235,6 +476,10 @@ def main(args: Array[String]): Unit = {
 //  Sequential (List (Note (60,1000,100), Note (63,500,100), Note (61,500,100),
 //                     Rest (1000), Note(67,1000,100))),
 //  Sequential (List (Note (52,2000,100),Note (55,1000,100), Note (55,1000,100)))))
-  openEditor(canon_Bach())
-  }
+
+//  val chordTest = Chord (1000 , List (Note (55, 10000, 2000)))
+
+    openEditor(cantateBWV318)
+
+    }
 }
