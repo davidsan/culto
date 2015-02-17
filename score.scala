@@ -1,3 +1,4 @@
+import com.typesafe.config._
 
 import math._
 import scala.swing._
@@ -478,6 +479,9 @@ def main(args: Array[String]): Unit = {
 //  Sequential (List (Note (52,2000,100),Note (55,1000,100), Note (55,1000,100)))))
 
 //  val chordTest = Chord (1000 , List (Note (55, 10000, 2000)))
+
+    val conf = ConfigFactory.load()
+    println("The answer is: " + conf.getString("simple-app.answer"))
 
     openEditor(cantateBWV318)
 
