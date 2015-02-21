@@ -219,7 +219,7 @@ def playObject (obj:ObjectMusical): Unit = {
   val delay = 500
   val cfg = UDP.Config()
   cfg.codec = PacketCodec().doublesAsFloats().booleansAsInts()
-  val c = UDP.Client( "127.0.0.1" -> 3341, cfg )
+  val c = UDP.Client( localhost -> 3341, cfg )
   c.connect()
   val system = akka.actor.ActorSystem("system")
 
